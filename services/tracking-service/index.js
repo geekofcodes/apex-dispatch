@@ -5,10 +5,10 @@ import mongoose from 'mongoose';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
-const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/tracking';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/tracking';
 
 // MongoDB Connection
-mongoose.connect(MONGO_URL)
+mongoose.connect(MONGO_URI)
     .then(() => console.log('[TRACKING SERVICE] Connected to MongoDB'))
     .catch(err => console.error('[TRACKING SERVICE] MongoDB connection error:', err));
 

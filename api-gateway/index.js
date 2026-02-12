@@ -8,8 +8,33 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'apex-dispatch-secret-key-change-in-production';
 
+// Service URLs (use environment variables for Render deployment)
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth-service:4000';
+const ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://order-service:5000';
+const TRACKING_SERVICE_URL = process.env.TRACKING_SERVICE_URL || 'http://tracking-service:8000';
+const EVENT_BUS_URL = process.env.EVENT_BUS_URL || 'http://event-bus:10000';
+
+// CORS Configuration
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const allowedOrigins = [
+    FRONTEND_URL,
+    'http://localhost:5173',
+    'http://localhost:3000'
+].filter(Boolean);
+
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -49,13 +74,17 @@ function requireRole(...allowedRoles) {
 
 // Health endpoint (no auth required)
 app.get('/health', (req, res) => {
-    res.json({ status: 'API Gateway is running' });
+    res.json({
+        status: 'API Gateway is running',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
 });
 
 // Auth endpoints (no auth required for login)
 app.post('/api/auth/login', async (req, res) => {
     try {
-        const response = await axios.post('http://auth-service:4000/auth/login', req.body);
+        const response = await axios.post(`${AUTH_SERVICE_URL}/auth/login`, req.body);
         res.json(response.data);
     } catch (error) {
         res.status(error.response?.status || 500).json(
@@ -66,7 +95,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.post('/api/auth/verify', async (req, res) => {
     try {
-        const response = await axios.post('http://auth-service:4000/auth/verify', null, {
+        const response = await axios.post(`${AUTH_SERVICE_URL}/auth/verify`, null, {
             headers: { Authorization: req.headers.authorization }
         });
         res.json(response.data);
@@ -81,7 +110,7 @@ app.post('/api/auth/verify', async (req, res) => {
 app.post('/api/orders', verifyJWT, requireRole('admin', 'operator'), async (req, res) => {
     try {
         console.log(`[API GATEWAY] User ${req.user.email} (${req.user.role}) creating order`);
-        const response = await axios.post('http://order-service:5000/orders', req.body);
+        const response = await axios.post(`${ORDER_SERVICE_URL}/orders`, req.body);
         res.json(response.data);
     } catch (error) {
         console.error('[API GATEWAY] Error forwarding to Order Service:', error.message);
@@ -93,7 +122,7 @@ app.post('/api/orders', verifyJWT, requireRole('admin', 'operator'), async (req,
 app.get('/api/orders', verifyJWT, requireRole('admin', 'operator', 'viewer'), async (req, res) => {
     try {
         console.log(`[API GATEWAY] User ${req.user.email} (${req.user.role}) fetching orders`);
-        const response = await axios.get('http://order-service:5000/orders');
+        const response = await axios.get(`${ORDER_SERVICE_URL}/orders`);
         res.json(response.data);
     } catch (error) {
         console.error('[API GATEWAY] Error fetching orders:', error.message);
@@ -106,7 +135,7 @@ app.get('/api/tracking/:orderId', verifyJWT, requireRole('admin', 'operator', 'v
     try {
         const { orderId } = req.params;
         console.log(`[API GATEWAY] User ${req.user.email} (${req.user.role}) fetching tracking for ${orderId}`);
-        const response = await axios.get(`http://tracking-service:8000/tracking/${orderId}`);
+        const response = await axios.get(`${TRACKING_SERVICE_URL}/tracking/${orderId}`);
         res.json(response.data);
     } catch (error) {
         console.error('[API GATEWAY] Error fetching tracking:', error.message);
@@ -121,7 +150,7 @@ app.get('/api/events', verifyJWT, requireRole('admin'), async (req, res) => {
     try {
         const limit = req.query.limit || 50;
         console.log(`[API GATEWAY] Admin ${req.user.email} fetching events`);
-        const response = await axios.get(`http://event-bus:10000/events?limit=${limit}`);
+        const response = await axios.get(`${EVENT_BUS_URL}/events?limit=${limit}`);
         res.json(response.data);
     } catch (error) {
         console.error('[API GATEWAY] Error fetching events:', error.message);
@@ -137,7 +166,7 @@ app.get('/api/events/metrics', verifyJWT, requireRole('admin'), async (req, res)
         console.log(`[API GATEWAY] Admin ${req.user.email} fetching event metrics`);
 
         // Fetch all events
-        const eventsResponse = await axios.get('http://event-bus:10000/events?limit=1000');
+        const eventsResponse = await axios.get(`${EVENT_BUS_URL}/events?limit=1000`);
         const events = eventsResponse.data.events || [];
 
         // Calculate metrics
@@ -149,7 +178,7 @@ app.get('/api/events/metrics', verifyJWT, requireRole('admin'), async (req, res)
         // For each event, fetch details to get delivery info
         for (const event of events) {
             try {
-                const detailsResponse = await axios.get(`http://event-bus:10000/events/${event.eventId}`);
+                const detailsResponse = await axios.get(`${EVENT_BUS_URL}/events/${event.eventId}`);
                 const deliveries = detailsResponse.data.deliveries || [];
 
                 // Check if any delivery failed
@@ -188,7 +217,7 @@ app.get('/api/events/:eventId', verifyJWT, requireRole('admin'), async (req, res
     try {
         const { eventId } = req.params;
         console.log(`[API GATEWAY] Admin ${req.user.email} fetching event ${eventId}`);
-        const response = await axios.get(`http://event-bus:10000/events/${eventId}`);
+        const response = await axios.get(`${EVENT_BUS_URL}/events/${eventId}`);
         res.json(response.data);
     } catch (error) {
         console.error('[API GATEWAY] Error fetching event details:', error.message);
@@ -202,7 +231,7 @@ app.post('/api/events/:eventId/replay', verifyJWT, requireRole('admin'), async (
     try {
         const { eventId } = req.params;
         console.log(`[API GATEWAY] Admin ${req.user.email} replaying event ${eventId}`);
-        const response = await axios.post(`http://event-bus:10000/events/${eventId}/replay`);
+        const response = await axios.post(`${EVENT_BUS_URL}/events/${eventId}/replay`);
         res.json(response.data);
     } catch (error) {
         console.error('[API GATEWAY] Error replaying event:', error.message);

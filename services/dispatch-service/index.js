@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const app = express();
 const PORT = process.env.PORT || 7000;
-const EVENT_BUS_URL = 'http://event-bus:10000/events';
+const EVENT_BUS_URL = process.env.EVENT_BUS_URL || 'http://event-bus:10000/events';
 
 // Middleware
 app.use(cors());
@@ -30,7 +30,7 @@ app.post('/events', async (req, res) => {
             console.log(`[DISPATCH SERVICE] Assigning courier for order: ${orderId}`);
 
             // Call Courier Service to get available courier
-            const courierResponse = await axios.get('http://courier-service:6000/couriers/available');
+            const courierResponse = await axios.get(process.env.COURIER_SERVICE_URL || 'http://courier-service:6000/couriers/available');
             const courier = courierResponse.data;
 
             console.log(`[DISPATCH SERVICE] Assigned courier ${courier.id} to order ${orderId}`);

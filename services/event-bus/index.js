@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto';
 const app = express();
 app.use(express.json());
 
-const PORT = 10000;
+const PORT = process.env.PORT || 10000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/eventbus';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 500;

@@ -5,10 +5,10 @@ import mongoose from 'mongoose';
 
 const app = express();
 const PORT = process.env.PORT || 6000;
-const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/couriers';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/couriers';
 
 // MongoDB Connection
-mongoose.connect(MONGO_URL)
+mongoose.connect(MONGO_URI)
     .then(() => console.log('Connected to MongoDB'))
     .then(() => seedCouriers())
     .catch(err => console.error('MongoDB connection error:', err));
