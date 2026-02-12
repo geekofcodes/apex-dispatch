@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  mongo-event-bus:
+    image: mongo:7
+    ports:
+      - "27021:27017"
+    volumes:
+      - event-bus-data:/data/db
+    restart: unless-stopped
+
+  event-bus:
+    build: ./services/event-bus
+    ports:
+      - "10000:10000"
+    depends_on:
+      - mongo-event-bus
+    environment:
+      - MONGO_URI=mongodb://mongo-event-bus:27017/eventbus
+    restart: unless-stopped
+
+  mongo-auth:
+    image: mongo:7
+    ports:
+      - "27022:27017"
+    volumes:
+      - auth-data:/data/db
+    restart: unless-stopped
+
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo-auth
+    environment:
+      - MONGO_URI=mongodb://mongo-auth:27017/auth
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+
+  mongo-courier:
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    volumes:
+      - courier-data:/data/db
+    restart: unless-stopped
+
+  courier-service:
+    build: ./services/courier-service
+    ports:
+      - "6000:6000"
+    depends_on:
+      - mongo-courier
+    environment:
+      - MONGO_URL=mongodb://mongo-courier:27017/couriers
+    restart: unless-stopped
+
+  mongo-tracking:
+    image: mongo:7
+    ports:
+      - "27019:27017"
+    volumes:
+      - tracking-data:/data/db
+    restart: unless-stopped
+
+  tracking-service:
+    build: ./services/tracking-service
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo-tracking
+      - event-bus
+    environment:
+      - MONGO_URL=mongodb://mongo-tracking:27017/tracking
+    restart: unless-stopped
+
+  notification-service:
+    build: ./services/notification-service
+    ports:
+      - "9000:9000"
+    depends_on:
+      - event-bus
+    restart: unless-stopped
+
+  dispatch-service:
+    build: ./services/dispatch-service
+    ports:
+      - "7000:7000"
+    depends_on:
+      - courier-service
+      - event-bus
+    restart: unless-stopped
+
+  mongo-order:
+    image: mongo:7
+    ports:
+      - "27020:27017"
+    volumes:
+      - order-data:/data/db
+    restart: unless-stopped
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo-order
+      - event-bus
+    environment:
+      - MONGO_URL=mongodb://mongo-order:27017/orders
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - order-service
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+
+volumes:
+  order-data:
+  courier-data:
+  tracking-data:
+  event-bus-data:
+  auth-data:

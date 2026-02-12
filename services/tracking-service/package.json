@@ -1,0 +1,19 @@
+{
+    "name": "tracking-service",
+    "version": "1.0.0",
+    "description": "Tracking Service for ApexDispatch",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "cors": "^2.8.6",
+        "express": "^5.2.1",
+        "mongoose": "^9.2.0",
+        "morgan": "^1.10.1"
+    }
+}
