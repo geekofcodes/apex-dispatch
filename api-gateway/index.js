@@ -15,12 +15,17 @@ const TRACKING_SERVICE_URL = process.env.TRACKING_SERVICE_URL || 'http://trackin
 const EVENT_BUS_URL = process.env.EVENT_BUS_URL || 'http://event-bus:10000';
 
 // CORS Configuration
+// Support multiple frontend URLs (comma-separated)
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const frontendUrls = FRONTEND_URL.split(',').map(url => url.trim());
+
 const allowedOrigins = [
-    FRONTEND_URL,
+    ...frontendUrls,
     'http://localhost:5173',
     'http://localhost:3000'
 ].filter(Boolean);
+
+console.log('[API GATEWAY] Allowed CORS origins:', allowedOrigins);
 
 // Middleware
 app.use(cors({
@@ -30,6 +35,7 @@ app.use(cors({
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
+            console.warn(`[API GATEWAY] CORS blocked origin: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
