@@ -310,6 +310,15 @@ app.post('/events/:eventId/replay', async (req, res) => {
     }
 });
 
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'event-bus',
+        uptime: process.uptime()
+    });
+});
+
+
 app.listen(PORT, () => {
     console.log(`[EVENT BUS] Running on port ${PORT}`);
 });
