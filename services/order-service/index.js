@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/orders';
-const EVENT_BUS_URL = 'http://event-bus:10000/events';
+const EVENT_BUS_URL = process.env.EVENT_BUS_URL || 'http://event-bus:10000/events';
 
 // MongoDB Connection
 mongoose.connect(MONGO_URL)
