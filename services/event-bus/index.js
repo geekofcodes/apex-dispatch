@@ -47,10 +47,11 @@ const Delivery = mongoose.model('Delivery', DeliverySchema);
 
 // List of services to notify
 const SERVICES = [
-    { name: 'dispatch-service', url: 'http://dispatch-service:7000/events' },
-    { name: 'tracking-service', url: 'http://tracking-service:8000/events' },
-    { name: 'notification-service', url: 'http://notification-service:9000/events' }
-];
+    { name: 'dispatch-service', url: process.env.DISPATCH_SERVICE_URL },
+    { name: 'tracking-service', url: process.env.TRACKING_SERVICE_URL },
+    { name: 'notification-service', url: process.env.NOTIFICATION_SERVICE_URL }
+].filter(s => !!s.url);
+
 
 // Helper function to delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
