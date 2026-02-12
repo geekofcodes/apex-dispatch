@@ -1,4 +1,27 @@
+# Environment variables (actual secrets)
 .env
+.env.local
+
+# Dependencies
 node_modules/
-.env.example
-.env.production
+package-lock.json
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Note: .env.example and .env.production are templates and should be committed

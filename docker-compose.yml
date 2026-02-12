@@ -53,7 +53,7 @@ services:
     depends_on:
       - mongo-courier
     environment:
-      - MONGO_URL=mongodb://mongo-courier:27017/couriers
+      - MONGO_URI=mongodb://mongo-courier:27017/couriers
     restart: unless-stopped
 
   mongo-tracking:
@@ -72,7 +72,7 @@ services:
       - mongo-tracking
       - event-bus
     environment:
-      - MONGO_URL=mongodb://mongo-tracking:27017/tracking
+      - MONGO_URI=mongodb://mongo-tracking:27017/tracking
     restart: unless-stopped
 
   notification-service:
@@ -108,7 +108,7 @@ services:
       - mongo-order
       - event-bus
     environment:
-      - MONGO_URL=mongodb://mongo-order:27017/orders
+      - MONGO_URI=mongodb://mongo-order:27017/orders
     restart: unless-stopped
 
   api-gateway:
